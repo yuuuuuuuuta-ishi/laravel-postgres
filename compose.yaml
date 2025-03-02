@@ -1,0 +1,68 @@
+services:
+  app:
+    build: 
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: laravel-app
+    # ソースコードをコンテナにマウント（開発中のホットリロード用）
+    volumes:
+      - ./laravel:/var/www/html
+      # - storage-volumes:/var/www/html/storage/framework
+      # - vendor-volumes:/var/www/html/vendor
+      # - node_modules-volumes:/var/www/html/node_modules
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - laravel-net
+    depends_on:
+      - db
+      - redis
+
+  nginx:
+    build: 
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    container_name: laravel-nginx
+    # Nginxの設定ファイルをマウント
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./laravel:/var/www/html
+    ports:
+      - "80:80"   # ホストのポート80番で公開
+    networks:
+      - laravel-net
+    depends_on:
+      - app
+
+  db:
+    build: 
+      context: ./docker/db
+      dockerfile: Dockerfile
+    container_name: laravel-postgres
+    environment:
+      POSTGRES_DB: laravel      # DB名（環境に合わせて変更）
+      POSTGRES_USER: laravel    # DBユーザ名（環境に合わせて変更）
+      POSTGRES_PASSWORD: secret # DBパスワード（環境に合わせて変更）
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - laravel-net
+
+  redis:
+    image: redis:alpine
+    container_name: laravel-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - laravel-net
+
+networks:
+  laravel-net:
+    driver: bridge
+
+volumes:
+  db-data:
+  storage-volumes:
+  vendor-volumes:
+  node_modules-volumes:

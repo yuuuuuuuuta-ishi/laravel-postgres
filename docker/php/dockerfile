@@ -1,0 +1,28 @@
+FROM php:8.4-fpm
+
+# 必要なパッケージ・PHP拡張をインストール
+RUN apt-get update && apt-get install -y \
+    libpq-dev git curl zip unzip \
+    && docker-php-ext-install pdo_pgsql \
+    && pecl install redis \
+    && docker-php-ext-enable redis
+
+# Node.jsをインストール（Node.js 18 を使用）
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
+
+# 作業ディレクトリを設定
+WORKDIR /var/www/html
+
+# Composerをインストール（公式イメージにはcomposer未搭載の場合）
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+
+# (ホスト側でプロジェクトを作成済みならソースコードをコピー)
+# COPY . /var/www/html
+
+# 依存関係のインストールとビルド
+# RUN composer install --no-dev && \
+#     npm install && \
+#     npm run build
+
+CMD ["php-fpm"]

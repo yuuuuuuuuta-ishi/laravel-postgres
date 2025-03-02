@@ -1,0 +1,10 @@
+FROM postgres:15-alpine
+
+# タイムゾーンを日本時間に設定
+RUN apk add --no-cache tzdata \
+    && cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+    && echo "Asia/Tokyo" > /etc/timezone
+
+# 環境変数でもタイムゾーンを指定（PostgreSQL 用）
+ENV TZ=Asia/Tokyo
+ENV PGTZ=Asia/Tokyo
